@@ -18,6 +18,7 @@ class App extends Component {
             results: null,
             searchKey: '',
             searchTerm: DEFAULT_QUERY,
+            error: null
         };
 
         this.needsToSearchTopStories = this.needsToSearchTopStories.bind(this);
@@ -33,7 +34,7 @@ class App extends Component {
     }
 
     setSearchTopStories(result) {
-        const { hits, page } = result;
+        const {hits, page} = result;
         const {searchKey, results} = this.state;
         const oldHits = results && results[searchKey]
             ? results[searchKey].hits
@@ -58,7 +59,7 @@ class App extends Component {
             page}&${PARAM_HPP}${DEFAULT_HPP}`)
             .then(response => response.json())
             .then(result => this.setSearchTopStories(result))
-            .catch(error => error);
+            .catch(error => this.setState({error}));
     }
 
     onSearchChange(event) {
@@ -66,8 +67,8 @@ class App extends Component {
     }
 
     onSearchSubmit(event) {
-        const { searchTerm } = this.state;
-        this.setState({ searchKey: searchTerm });
+        const {searchTerm} = this.state;
+        this.setState({searchKey: searchTerm});
 
         if (this.needsToSearchTopStories(searchTerm)) {
             this.fetchSearchTopStories(searchTerm);
@@ -77,8 +78,8 @@ class App extends Component {
     }
 
     onDismiss(id) {
-        const { searchKey, results } = this.state;
-        const { hits, page } = results[searchKey];
+        const {searchKey, results} = this.state;
+        const {hits, page} = results[searchKey];
 
         const isNotId = item => item.objectID !== id;
         const updatedHits = hits.filter(isNotId);
@@ -92,8 +93,8 @@ class App extends Component {
     }
 
     componentDidMount() {
-        const { searchTerm } = this.state;
-        this.setState({ searchKey: searchTerm });
+        const {searchTerm} = this.state;
+        this.setState({searchKey: searchTerm});
         this.fetchSearchTopStories(searchTerm);
     }
 
@@ -101,7 +102,8 @@ class App extends Component {
         const {
             searchTerm,
             searchKey,
-            results
+            results,
+            error
         } = this.state;
 
         const page = (
@@ -127,10 +129,15 @@ class App extends Component {
                         Search
                     </Search>
                 </div>
-                <Table
-                    list={list}
-                    onDismiss={this.onDismiss}
-                />
+                {error
+                    ? <div className="interactions">
+                        <p>Something went wrong.</p>
+                    </div>
+                    : <Table
+                        list={list}
+                        onDismiss={this.onDismiss}
+                    />
+                }
                 <div className="interactions">
                     <Button onClick={() => this.fetchSearchTopStories(searchKey, page + 1)}>
                         More
