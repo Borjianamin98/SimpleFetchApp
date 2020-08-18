@@ -1,6 +1,8 @@
 import React, {Component} from 'react';
 import axios from 'axios';
 import PropTypes from 'prop-types';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import './App.css';
 
 const DEFAULT_QUERY = 'redux';
@@ -21,7 +23,8 @@ class App extends Component {
             results: null,
             searchKey: '',
             searchTerm: DEFAULT_QUERY,
-            error: null
+            error: null,
+            isLoading: false,
         };
 
         this.needsToSearchTopStories = this.needsToSearchTopStories.bind(this);
@@ -53,11 +56,13 @@ class App extends Component {
                     hits: updatedHits,
                     page
                 }
-            }
+            },
+            isLoading: false
         });
     }
 
     fetchSearchTopStories(searchTerm, page = 0) {
+        this.setState({ isLoading: true });
         axios.get(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}&${PARAM_PAGE}${
             page}&${PARAM_HPP}${DEFAULT_HPP}`)
             .then(result => this.setSearchTopStories(result.data))
@@ -111,7 +116,8 @@ class App extends Component {
             searchTerm,
             searchKey,
             results,
-            error
+            error,
+            isLoading
         } = this.state;
 
         const page = (
@@ -147,14 +153,22 @@ class App extends Component {
                     />
                 }
                 <div className="interactions">
-                    <Button onClick={() => this.fetchSearchTopStories(searchKey, page + 1)}>
-                        More
-                    </Button>
+                    { isLoading
+                        ? <Loading />
+                        : <Button
+                            onClick={() => this.fetchSearchTopStories(searchKey, page + 1)}
+                        >
+                            More
+                        </Button>
+                    }
                 </div>
             </div>
         );
     }
 }
+
+const Loading = () =>
+    <FontAwesomeIcon icon={faSpinner} spin size="3x" />
 
 class Search extends Component {
     componentDidMount() {
