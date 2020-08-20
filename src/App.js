@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import axios from 'axios';
 import PropTypes from 'prop-types';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
-import {faSpinner} from '@fortawesome/free-solid-svg-icons'
+import {faSpinner, faSortUp, faSortDown, faSort} from '@fortawesome/free-solid-svg-icons'
 import {sortBy} from 'lodash';
 import classNames from 'classnames';
 import './App.css';
@@ -257,6 +257,7 @@ const Table = ({
                     sortKey={'TITLE'}
                     onSort={onSort}
                     activeSortKey={sortKey}
+                    isSortReverse={isSortReverse}
                 >
                 Title
                 </Sort>
@@ -266,6 +267,7 @@ const Table = ({
                     sortKey={'AUTHOR'}
                     onSort={onSort}
                     activeSortKey={sortKey}
+                    isSortReverse={isSortReverse}
                 >
                 Author
                 </Sort>
@@ -275,6 +277,7 @@ const Table = ({
                     sortKey={'COMMENTS'}
                     onSort={onSort}
                     activeSortKey={sortKey}
+                    isSortReverse={isSortReverse}
                 >
                 Comments
                 </Sort>
@@ -284,6 +287,7 @@ const Table = ({
                     sortKey={'POINTS'}
                     onSort={onSort}
                     activeSortKey={sortKey}
+                    isSortReverse={isSortReverse}
                 >
                 Points
                 </Sort>
@@ -331,19 +335,28 @@ const Sort = ({
                   sortKey,
                   activeSortKey,
                   onSort,
+                  isSortReverse,
                   children
               }) => {
     const sortClass = classNames(
         'button-inline',
-        { 'button-active': sortKey === activeSortKey }
+        {'button-active': sortKey === activeSortKey}
     );
     return (
-        <Button
-            onClick={() => onSort(sortKey)}
-            className={sortClass}
-        >
-            {children}
-        </Button>
+        <div>
+            <Button
+                onClick={() => onSort(sortKey)}
+                className={sortClass}
+            >
+                {children}
+            </Button>
+            {
+                sortKey === activeSortKey ? (isSortReverse ?
+                    <FontAwesomeIcon style={{marginLeft: '10px'}} icon={faSortUp}/> :
+                    <FontAwesomeIcon style={{marginLeft: '10px'}} icon={faSortDown}/>):
+                    <FontAwesomeIcon style={{marginLeft: '10px'}} icon={faSort}/>
+            }
+        </div>
     );
 }
 
