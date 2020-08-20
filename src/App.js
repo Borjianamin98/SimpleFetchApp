@@ -153,14 +153,12 @@ class App extends Component {
                     />
                 }
                 <div className="interactions">
-                    { isLoading
-                        ? <Loading />
-                        : <Button
-                            onClick={() => this.fetchSearchTopStories(searchKey, page + 1)}
+                    <ButtonWithLoading
+                        isLoading={isLoading}
+                        onClick={() => this.fetchSearchTopStories(searchKey, page + 1)}
                         >
-                            More
-                        </Button>
-                    }
+                        More
+                    </ButtonWithLoading>
                 </div>
             </div>
         );
@@ -169,6 +167,11 @@ class App extends Component {
 
 const Loading = () =>
     <FontAwesomeIcon icon={faSpinner} spin size="3x" />
+
+const withLoading = (Component) => ({ isLoading, ...rest }) =>
+    isLoading
+        ? <Loading />
+        : <Component { ...rest } />
 
 class Search extends Component {
     componentDidMount() {
@@ -263,6 +266,8 @@ Button.propTypes = {
     className: PropTypes.string,
     children: PropTypes.node.isRequired,
 };
+
+const ButtonWithLoading = withLoading(Button);
 
 export default App;
 export {
