@@ -35,8 +35,6 @@ class App extends Component {
             searchTerm: DEFAULT_QUERY,
             error: null,
             isLoading: false,
-            sortKey: 'NONE',
-            isSortReverse: false,
         };
 
         this.needsToSearchTopStories = this.needsToSearchTopStories.bind(this);
@@ -45,7 +43,6 @@ class App extends Component {
         this.onSearchChange = this.onSearchChange.bind(this);
         this.onSearchSubmit = this.onSearchSubmit.bind(this);
         this.onDismiss = this.onDismiss.bind(this);
-        this.onSort = this.onSort.bind(this);
     }
 
     needsToSearchTopStories(searchTerm) {
@@ -112,11 +109,6 @@ class App extends Component {
         });
     }
 
-    onSort(sortKey) {
-        const isSortReverse = this.state.sortKey === sortKey && !this.state.isSortReverse;
-        this.setState({sortKey, isSortReverse});
-    }
-
     componentDidMount() {
         this._isMounted = true;
 
@@ -136,8 +128,6 @@ class App extends Component {
             results,
             error,
             isLoading,
-            sortKey,
-            isSortReverse
         } = this.state;
 
         const page = (
@@ -169,9 +159,6 @@ class App extends Component {
                     </div>
                     : <Table
                         list={list}
-                        sortKey={sortKey}
-                        isSortReverse={isSortReverse}
-                        onSort={this.onSort}
                         onDismiss={this.onDismiss}
                     />
                 }
@@ -238,83 +225,106 @@ const smallColumn = {
     width: '10%',
 };
 
-const Table = ({
-                   list,
-                   sortKey,
-                   onSort,
-                   isSortReverse,
-                   onDismiss,
-               }) => {
-    const sortedList = SORTS[sortKey](list);
-    const reverseSortedList = isSortReverse
-        ? sortedList.reverse()
-        : sortedList;
+class Table extends Component {
 
-    return <div className="table">
-        <div className="table-header">
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            sortKey: 'NONE',
+            isSortReverse: false,
+        };
+        this.onSort = this.onSort.bind(this);
+    }
+
+    onSort(sortKey) {
+        const isSortReverse = this.state.sortKey === sortKey &&
+            !this.state.isSortReverse;
+        this.setState({ sortKey, isSortReverse });
+    }
+
+    render() {
+        const {
+            list,
+            onDismiss,
+        } = this.props;
+
+        const {
+            sortKey,
+            isSortReverse,
+        } = this.state;
+
+        const sortedList = SORTS[sortKey](list);
+        const reverseSortedList = isSortReverse
+            ? sortedList.reverse()
+            : sortedList;
+
+        return <div className="table">
+            <div className="table-header">
             <span style={{width: '40%'}}>
                 <Sort
                     sortKey={'TITLE'}
-                    onSort={onSort}
+                    onSort={this.onSort}
                     activeSortKey={sortKey}
                     isSortReverse={isSortReverse}
                 >
                 Title
                 </Sort>
             </span>
-            <span style={{width: '30%'}}>
+                <span style={{width: '30%'}}>
                 <Sort
                     sortKey={'AUTHOR'}
-                    onSort={onSort}
+                    onSort={this.onSort}
                     activeSortKey={sortKey}
                     isSortReverse={isSortReverse}
                 >
                 Author
                 </Sort>
             </span>
-            <span style={{width: '10%'}}>
+                <span style={{width: '10%'}}>
                 <Sort
                     sortKey={'COMMENTS'}
-                    onSort={onSort}
+                    onSort={this.onSort}
                     activeSortKey={sortKey}
                     isSortReverse={isSortReverse}
                 >
                 Comments
                 </Sort>
             </span>
-            <span style={{width: '10%'}}>
+                <span style={{width: '10%'}}>
                 <Sort
                     sortKey={'POINTS'}
-                    onSort={onSort}
+                    onSort={this.onSort}
                     activeSortKey={sortKey}
                     isSortReverse={isSortReverse}
                 >
                 Points
                 </Sort>
             </span>
-            <span style={{width: '10%'}}>
+                <span style={{width: '10%'}}>
                 Archive
             </span>
-        </div>
-        {reverseSortedList.map(item =>
-            <div key={item.objectID} className="table-row">
+            </div>
+            {reverseSortedList.map(item =>
+                <div key={item.objectID} className="table-row">
                 <span style={largeColumn}>
                     <a href={item.url}>{item.title}</a>
                 </span>
-                <span style={midColumn}>{item.author}</span>
-                <span style={smallColumn}>{item.num_comments}</span>
-                <span style={smallColumn}>{item.points}</span>
-                <span style={smallColumn}>
+                    <span style={midColumn}>{item.author}</span>
+                    <span style={smallColumn}>{item.num_comments}</span>
+                    <span style={smallColumn}>{item.points}</span>
+                    <span style={smallColumn}>
                     <Button
                         onClick={() => onDismiss(item.objectID)}
                         className="button-inline">
                         Dismiss
                     </Button>
                 </span>
-            </div>
-        )}
-    </div>;
-};
+                </div>
+            )}
+        </div>;
+    }
+}
 
 Table.propTypes = {
     list: PropTypes.arrayOf(PropTypes.shape({
@@ -325,9 +335,6 @@ Table.propTypes = {
         num_comments: PropTypes.number,
         points: PropTypes.number,
     })).isRequired,
-    sortKey: PropTypes.string.isRequired,
-    onSort: PropTypes.func,
-    isSortReverse: PropTypes.bool.isRequired,
     onDismiss: PropTypes.func
 }
 
