@@ -14,8 +14,9 @@ import {
     PARAM_HPP
 } from '../../constants'
 
-const updateSearchTopStoriesState = (hits, page) => (prevState) => {
-    const {searchKey, results} = prevState;
+const useMountEffect = (func) => React.useEffect(func, [])
+const updateSearchTopStoriesState = (hits, page) => (prevTopResult) => {
+    const {results, searchKey} = prevTopResult;
     const oldHits = results && results[searchKey]
         ? results[searchKey].hits
         : [];
@@ -28,140 +29,115 @@ const updateSearchTopStoriesState = (hits, page) => (prevState) => {
             ...results,
             [searchKey]: {hits: updatedHits, page}
         },
-        isLoading: false
+        searchKey
     };
 };
 
-export default class App extends React.Component {
-    _isMounted = false;
+const App = () => {
+    const isMounted = React.useRef(false);
+    const [topResult, setTopResult] = React.useState({
+        results: null,
+        searchKey: DEFAULT_QUERY,
+    });
+    const [searchTerm, setSearchTerm] = React.useState(DEFAULT_QUERY);
+    const [error, setError] = React.useState(null);
+    const [isLoading, setIsLoading] = React.useState(false);
 
-    constructor(params) {
-        super(params);
-        this.state = {
-            results: null,
-            searchKey: '',
-            searchTerm: DEFAULT_QUERY,
-            error: null,
-            isLoading: false,
-        };
-
-        this.needsToSearchTopStories = this.needsToSearchTopStories.bind(this);
-        this.setSearchTopStories = this.setSearchTopStories.bind(this);
-        this.fetchSearchTopStories = this.fetchSearchTopStories.bind(this);
-        this.onSearchChange = this.onSearchChange.bind(this);
-        this.onSearchSubmit = this.onSearchSubmit.bind(this);
-        this.onDismiss = this.onDismiss.bind(this);
+    function needsToSearchTopStories(searchTerm) {
+        return !topResult.results[searchTerm];
     }
 
-    needsToSearchTopStories(searchTerm) {
-        return !this.state.results[searchTerm];
-    }
-
-    setSearchTopStories(result) {
+    function setSearchTopStories(result) {
         const {hits, page} = result;
-        this.setState(updateSearchTopStoriesState(hits, page));
+        setTopResult(updateSearchTopStoriesState(hits, page));
+        setIsLoading(false);
     }
 
-    fetchSearchTopStories(searchTerm, page = 0) {
-        this.setState({isLoading: true});
+    function fetchSearchTopStories(searchTerm, page = 0) {
+        setIsLoading(true);
         axios.get(`${PATH_BASE}${PATH_SEARCH}?${PARAM_SEARCH}${searchTerm}&${PARAM_PAGE}${
             page}&${PARAM_HPP}${DEFAULT_HPP}`)
-            .then(result => this.setSearchTopStories(result.data))
-            .catch(error => this._isMounted && this.setState({error}));
+            .then(result => isMounted.current && setSearchTopStories(result.data))
+            .catch(error => isMounted.current && setError(error));
     }
 
-    onSearchChange(event) {
-        this.setState({searchTerm: event.target.value});
+    function onSearchChange(event) {
+        setSearchTerm(event.target.value)
     }
 
-    onSearchSubmit(event) {
-        const {searchTerm} = this.state;
-        this.setState({searchKey: searchTerm});
+    function onSearchSubmit(event) {
+        setTopResult({
+            ...topResult,
+            searchKey: searchTerm
+        })
 
-        if (this.needsToSearchTopStories(searchTerm)) {
-            this.fetchSearchTopStories(searchTerm);
+        if (needsToSearchTopStories(searchTerm)) {
+            fetchSearchTopStories(searchTerm);
         }
 
         event.preventDefault();
     }
 
-    onDismiss(id) {
-        const {searchKey, results} = this.state;
-        const {hits, page} = results[searchKey];
-
-        const isNotId = item => item.objectID !== id;
-        const updatedHits = hits.filter(isNotId);
-
-        this.setState({
-            results: {
-                ...results,
-                [searchKey]: {hits: updatedHits, page}
-            }
-        });
+    function onDismiss(id) {
+        const {hits, page} = topResult.results[topResult.searchKey];
+        const updatedHits = hits.filter(item => item.objectID !== id);
+        const newTopResult = {...topResult};
+        newTopResult.results[[topResult.searchKey]] = {hits: updatedHits, page};
+        setTopResult(newTopResult)
     }
 
-    componentDidMount() {
-        this._isMounted = true;
+    useMountEffect(() => {
+        isMounted.current = true;
+        fetchSearchTopStories(DEFAULT_QUERY);
 
-        const {searchTerm} = this.state;
-        this.setState({searchKey: searchTerm});
-        this.fetchSearchTopStories(searchTerm);
-    }
+        return () => {
+            isMounted.current = false;
+        };
+    })
 
-    componentWillUnmount() {
-        this._isMounted = false;
-    }
+    const {results, searchKey} = topResult;
+    const page = (
+        results &&
+        results[searchKey] &&
+        results[searchKey].page
+    ) || 0;
 
-    render() {
-        const {
-            searchTerm,
-            searchKey,
-            results,
-            error,
-            isLoading,
-        } = this.state;
+    const list = (
+        results &&
+        results[searchKey] &&
+        results[searchKey].hits
+    ) || [];
 
-        const page = (
-            results &&
-            results[searchKey] &&
-            results[searchKey].page
-        ) || 0;
-
-        const list = (
-            results &&
-            results[searchKey] &&
-            results[searchKey].hits
-        ) || [];
-
-        return (
-            <div className="page">
-                <div className="interactions">
-                    <Search
-                        value={searchTerm}
-                        onChange={this.onSearchChange}
-                        onSubmit={this.onSearchSubmit}
-                    >
-                        Search
-                    </Search>
-                </div>
-                {error
-                    ? <div className="interactions">
-                        <p>Something went wrong.</p>
-                    </div>
-                    : <Table
-                        list={list}
-                        onDismiss={this.onDismiss}
-                    />
-                }
-                <div className="interactions">
-                    <ButtonWithLoading
-                        isLoading={isLoading}
-                        onClick={() => this.fetchSearchTopStories(searchKey, page + 1)}
-                    >
-                        More
-                    </ButtonWithLoading>
-                </div>
+    return (
+        <div className="page">
+            <div className="interactions">
+                <Search
+                    value={searchTerm}
+                    onChange={onSearchChange}
+                    onSubmit={onSearchSubmit}
+                >
+                    Search
+                </Search>
             </div>
-        );
-    }
+            {error
+                ? <div className="interactions">
+                    <p>Something went wrong.</p>
+                </div>
+                : <Table
+                    list={list}
+                    onDismiss={onDismiss}
+                />
+            }
+            <div className="interactions">
+                <ButtonWithLoading
+                    isLoading={isLoading}
+                    onClick={() => fetchSearchTopStories(searchKey, page + 1)}
+                >
+                    More
+                </ButtonWithLoading>
+            </div>
+        </div>
+    );
 }
+
+export default App;

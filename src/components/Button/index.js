@@ -2,18 +2,14 @@ import PropTypes from "prop-types";
 import React from "react";
 import {withLoading} from "../helper/withLoading";
 
-export default class Button extends React.Component {
-    render() {
-        let {onClick, className, children} = this.props;
-        return <button
-            onClick={onClick}
-            className={className}
-            type="button"
-        >
-            {children}
-        </button>;
-    }
-}
+const Button = ({onClick, className, children}) =>
+    <button
+        onClick={onClick}
+        className={className}
+        type="button"
+    >
+        {children}
+    </button>
 
 Button.defaultProps = {
     className: '',
@@ -25,4 +21,5 @@ Button.propTypes = {
     children: PropTypes.node.isRequired,
 };
 
+export default Button;
 export const ButtonWithLoading = withLoading(Button);

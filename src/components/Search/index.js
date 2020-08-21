@@ -1,29 +1,27 @@
-import React, {Component} from "react";
+import React from "react";
 import PropTypes from "prop-types";
 
-export default class Search extends Component {
-    componentDidMount() {
-        if (this.input) {
-            this.input.focus();
+const Search = ({value, onChange, onSubmit, children}) => {
+    const inputInstance = React.useRef(null);
+    React.useEffect(() => {
+        if (inputInstance && inputInstance.current) {
+            inputInstance.current.focus();
         }
-    }
+    }, [])
 
-    render() {
-        const {value, onChange, onSubmit, children} = this.props;
-        return (
-            <form onSubmit={onSubmit}>
-                <input
-                    type="text"
-                    value={value}
-                    onChange={onChange}
-                    ref={instance => this.input = instance}
-                />
-                <button type="submit">
-                    {children}
-                </button>
-            </form>
-        );
-    }
+    return (
+        <form onSubmit={onSubmit}>
+            <input
+                type="text"
+                value={value}
+                onChange={onChange}
+                ref={inputInstance}
+            />
+            <button type="submit">
+                {children}
+            </button>
+        </form>
+    );
 }
 
 Search.propTypes = {
@@ -32,3 +30,5 @@ Search.propTypes = {
     onSubmit: PropTypes.func.isRequired,
     children: PropTypes.node.isRequired,
 }
+
+export default Search;

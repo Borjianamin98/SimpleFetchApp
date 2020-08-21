@@ -1,11 +1,7 @@
-import Search from "./index.js";
+import React from "react";
 import ReactDOM from "react-dom";
 import renderer from "react-test-renderer";
-import React from "react";
-import Enzyme from "enzyme";
-import Adapter from "enzyme-adapter-react-16.1";
-
-Enzyme.configure({adapter: new Adapter()});
+import Search from "./index.js";
 
 describe('Search', () => {
     const searchButton = <Search
